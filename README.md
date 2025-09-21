@@ -3,6 +3,8 @@
 ## Business Understanding
 Employee retention refers to an organization’s ability to maintain a stable and engaged workforce by creating an environment where employees are motivated to stay and grow. Strong retention safeguards institutional knowledge, sustains productivity, and enhances the organization’s reputation as an employer of choice. It is driven by factors such as fair compensation, career development opportunities, supportive leadership, manageable workloads, and a sense of purpose.
 
+<img width="684" height="379" alt="Screenshot 2025-09-21 at 16 30 40" src="https://github.com/user-attachments/assets/b663c42e-b91d-430c-a276-fd0c13462741" />
+
 ### Why Retention Matters More Than Hiring
 Hiring new employees is significantly more costly than retaining current ones. Recruitment expenses, training, and the productivity loss during the onboarding phase often exceed 30–150% of the departing employee’s annual salary. Beyond these visible costs, organizations also lose valuable institutional knowledge, disrupt team dynamics, and risk lowered customer satisfaction—consequences that can take months or even years to fully recover from.
 
