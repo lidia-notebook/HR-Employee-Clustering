@@ -1,0 +1,25 @@
+# Core
+pandas
+numpy
+
+# Visualization
+matplotlib
+seaborn
+plotly
+
+# Statistics
+scipy
+
+# Machine Learning
+scikit-learn
+imbalanced-learn
+xgboost
+
+# Model explainability (optional now, handy later)
+shap
+
+# Persistence / utilities
+joblib
+
+# Streamlit App
+streamlit

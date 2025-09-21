@@ -1,0 +1,54 @@
+{
+  "rows": 3030,
+  "cols": 14,
+  "id_col": "employee_id",
+  "numeric_cols": [
+    "age",
+    "years_experience",
+    "weekly_hours",
+    "bonus_percentage",
+    "performance_score",
+    "overtime_hours",
+    "monthly_income"
+  ],
+  "categorical_cols": [
+    "gender",
+    "marital_status",
+    "city",
+    "education_level",
+    "department",
+    "income_class"
+  ],
+  "na_counts": {
+    "age": 0,
+    "years_experience": 0,
+    "weekly_hours": 0,
+    "bonus_percentage": 0,
+    "performance_score": 0,
+    "overtime_hours": 0,
+    "monthly_income": 0,
+    "gender": 0,
+    "marital_status": 0,
+    "city": 0,
+    "education_level": 0,
+    "department": 0,
+    "income_class": 0
+  },
+  "unique_counts": {
+    "age": 96,
+    "years_experience": 28,
+    "weekly_hours": 285,
+    "bonus_percentage": 162,
+    "performance_score": 491,
+    "overtime_hours": 244,
+    "monthly_income": 2602,
+    "gender": 3,
+    "marital_status": 3,
+    "city": 3,
+    "education_level": 4,
+    "department": 6,
+    "income_class": 2
+  },
+  "notes": "EDA results for distributions, outliers, category counts, relationships, and correlations.",
+  "schema_version": "v0.1"
+}

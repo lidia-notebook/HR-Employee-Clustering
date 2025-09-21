@@ -1,0 +1,82 @@
+{
+  "version": "v0.1",
+  "created_at": "2025-09-20T12:45:24Z",
+  "id_col": "employee_id",
+  "risk_features": {
+    "performance_score": "performance_score",
+    "bonus_percentage": "bonus_percentage",
+    "overtime_hours": "overtime_hours",
+    "monthly_income": "monthly_income",
+    "income_class": "income_class",
+    "marital_status": "marital_status"
+  },
+  "thresholds": {
+    "quantiles": {
+      "high_perf_q": 0.7,
+      "low_bonus_q": 0.3,
+      "high_ot_q": 0.7,
+      "low_income_q": 0.3
+    },
+    "values": {
+      "perf_hi_val": 80.5,
+      "bonus_lo_val": 9.5,
+      "ot_hi_val": 12.2,
+      "income_lo_val": 7698.4
+    },
+    "risk_bucket_cuts": {
+      "high_cut": 60.0,
+      "low_cut": 30.0
+    },
+    "marital_single_values": [
+      "Single",
+      "S"
+    ]
+  },
+  "categories": {
+    "income_class_levels": [
+      "High",
+      "Low"
+    ],
+    "marital_status_levels": [
+      "Married",
+      "Single",
+      "Divorced"
+    ]
+  },
+  "notes": {
+    "risk_index": "Rule-based snapshot risk (0\u2013100). Not time-bound.",
+    "performance_split": "High performance if performance_score >= perf_hi_val.",
+    "provenance": "Thresholds derived from df1 at save time."
+  },
+  "clustering": {
+    "features_used": [
+      "age",
+      "years_experience",
+      "weekly_hours",
+      "bonus_percentage",
+      "performance_score",
+      "overtime_hours",
+      "monthly_income",
+      "gender",
+      "marital_status",
+      "city",
+      "education_level",
+      "department",
+      "income_class"
+    ],
+    "best_k": 3,
+    "metrics": {
+      "silhouette": 0.12035367780050209,
+      "davies_bouldin": 2.1242349324552605
+    }
+  },
+  "risk_scoring": {
+    "weights": {
+      "high_perf_low_bonus": 30,
+      "high_overtime": 20,
+      "low_income": 25,
+      "low_income_class": 5,
+      "single_status": 10
+    }
+  }
+}
