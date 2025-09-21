@@ -83,7 +83,7 @@ We use a two-layer framework:
 
 **Deliverables**
 - Jupyter Notebook (exploration and modeling)
-- Streamlit app (interactive clustering and risk prediction)
+- [Streamlit app for HR to know clustering and prediction of the employee ](https://hr-employee-clustering-jxsq4bmgzrnpxy9f7iqrfx.streamlit.app/)
 - Final report with recommendations
 
 ---
