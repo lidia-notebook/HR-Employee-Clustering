@@ -14,8 +14,27 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Business HR App", page_icon="💼", layout="wide")
 st.title("💼 Business HR — Prediction & Clustering")
 
+st.markdown("""
+<style>
+.cq-header { 
+  font-size: 0.9rem; 
+  color: #6b7280; /* muted gray */
+  margin-top: .25rem;
+  margin-bottom: .5rem;
+}
+.cq-block p { margin: 0 0 .5rem 0; }
+</style>
+""", unsafe_allow_html=True)
+
 
 # Config
+
+CLUSTER_TITLES = {
+    0: "High Performers",
+    1: "Balanced / Average",
+    2: "At Risk / Ineffective High Cost",
+}
+
 
 CLUSTER_MEANINGS = {
     0: "High performance, low salary",
@@ -23,12 +42,14 @@ CLUSTER_MEANINGS = {
     2: "High earners, low performance",
 }
 
+
 CLUSTER_MESSAGES_SUFFIX = {
     0: "the High Performers. Watch out if they feel unfair of salary base.",
     1: "the Work Life Balance! Watch for risk of stagnation & lack of motivation.",
     2: "our high earners but not too effective.",
 }
 
+# Base recos (fallback if no cluster×quadrant mapping)
 CLUSTER_RECOMMENDATIONS_BASE = {
     0: "Offer financial security, recognition & growth.",
     1: "Offer flexible schedule, team building and development.",
@@ -54,14 +75,16 @@ MARITAL_OPTS = ["Single", "Married", "Divorced", "Widowed"]
 EDU_OPTS = ["High School", "Diploma", "Bachelor", "Master", "Doctorate"]
 DEPT_OPTS = ["Sales", "Tech", "Finance", "HR", "Operations", "Marketing"]
 
-
+# Threshold for high performance
 PERF_HIGH_CUT = 75.0
 
-RISK_FROM_CLUSTER = {0: "Low", 1: "Low", 2: "High"}
+# Risk mapping now Low / Medium / High 
 
+RISK_FROM_CLUSTER = {0: "Low", 1: "Medium", 2: "High"}
 
+# Quadrant canonical order +
 QUADRANT_ORDER = [
-    "Low Performance, Low Risk",   
+    "Low Performance, Low Risk",  
     "Low Performance, High Risk",  
     "High Performance, Low Risk",  
     "High Performance, High Risk", 
@@ -70,9 +93,12 @@ def quadrant_id(name: str) -> int:
     try:
         return QUADRANT_ORDER.index(name) + 1
     except ValueError:
-        return 0  # fallback
+        return 0
 
+def quadrant_label_from_id(qid: int) -> str:
+    return QUADRANT_ORDER[qid-1] if 1 <= qid <= 4 else "Uncategorized"
 
+# Meaning & Recommendations by (cluster, quadrant_id)
 MEANING_BY_CQ = {
     (0, 3): "These are your role models. Strong, motivated, and stable.",
     (0, 4): "Your “flight risks.” Strong performers but tempted by outside opportunities or burnout.",
@@ -152,8 +178,12 @@ def predict_cluster_single(row_df: pd.DataFrame, pipe: Pipeline) -> int:
     return int(raw[0])
 
 def assign_quadrant(perf: float, risk_bucket: str) -> str:
+    """
+    Quadrants still need binary risk; we conservatively treat 'Medium' as 'High'.
+    Change to (risk_bucket == "High") if you want Medium to count as Low.
+    """
     perf_band = "High" if perf >= PERF_HIGH_CUT else "Low"
-    risk_band = "High" if risk_bucket == "High" else "Low"
+    risk_band = "High" if risk_bucket in {"High", "Medium"} else "Low"
 
     if perf_band == "Low" and risk_band == "Low":
         return "Low Performance, Low Risk"
@@ -165,12 +195,48 @@ def assign_quadrant(perf: float, risk_bucket: str) -> str:
         return "High Performance, High Risk"
     return "Uncategorized"
 
+def render_cq_block(cluster_id: int, qid: int, perf: float, risk_bucket: str,
+                    meaning_text: str, reco_text: str):
+    """
+    Renders exactly:
+    Cluster X — <Title> • Quadrant Y (High/Low Perf, High/Low Risk) • Performance: 79.3 • Risk: Medium
+    Meaning: ...
+    Recommendations: ...
+    """
+    cluster_title = CLUSTER_TITLES.get(cluster_id, f"Cluster {cluster_id}")
+    quad_label = quadrant_label_from_id(qid)
+    header = (
+        f"Cluster {cluster_id} — {cluster_title} • "
+        f"Quadrant {qid} ({quad_label}) • "
+        f"Performance: {perf:.1f} • "
+        f"Risk: {risk_bucket}"
+    )
+    st.markdown(f'<div class="cq-header">{header}</div>', unsafe_allow_html=True)
+    st.markdown("**Meaning:** " + (meaning_text or CLUSTER_MEANINGS.get(cluster_id, "")))
+    st.markdown("**Recommendations:** " + (reco_text or CLUSTER_RECOMMENDATIONS_BASE.get(cluster_id, "")))
+
+
+# Color Palettes
+
+RISK_COLOR_MAP = {
+    "Low":    "#22c55e", 
+    "Medium": "#facc15",  
+    "High":   "#ef4444",  
+}
+QUAD_COLOR_MAP = {
+    "Low Performance, Low Risk":   "#86efac",  
+    "Low Performance, High Risk":  "#fca5a5",  
+    "High Performance, Low Risk":  "#22c55e",  
+    "High Performance, High Risk": "#ef4444",  
+}
+
+
 # Tabs
 
-PERF_HIGH_CUT = 75.0
 tab_pred, tab_cluster = st.tabs(["🔮 Prediction", "🧩 Clustering"])
 
-# 🔮 Prediction
+
+#  Prediction
 
 with tab_pred:
     st.subheader("Model Inference (Clustering: k=3)")
@@ -211,17 +277,34 @@ with tab_pred:
         try:
             ref_pipe = get_reference_pipe()
             c = predict_cluster_single(row, ref_pipe)
+            risk_bucket = RISK_FROM_CLUSTER.get(c, "Low")
+            quad_name = assign_quadrant(performance_score, risk_bucket)
+            qid = quadrant_id(quad_name)
+
             st.success(
-                f"This employee belong to **Cluster {c}**.\n"
+                f"This employee belongs to **Cluster {c}**.\n\n"
                 f"Cluster {c}, {CLUSTER_MESSAGES_SUFFIX[c]}\n\n"
                 f"**Income Class:** {income_class}\n"
-                f"**Recommendation:** {CLUSTER_RECOMMENDATIONS_BASE[c]}"
             )
+
+            meaning_text = MEANING_BY_CQ.get((c, qid))
+            reco_text = RECO_BY_CQ.get((c, qid))
+
+            st.markdown("---")
+            render_cq_block(
+                cluster_id=c,
+                qid=qid,
+                perf=performance_score,
+                risk_bucket=risk_bucket,
+                meaning_text=meaning_text,
+                reco_text=reco_text
+            )
+
         except Exception as e:
             st.exception(e)
 
 
-# 🧩 Clustering
+#  Clustering
 
 with tab_cluster:
     st.subheader("Employee Segmentation (K-Means, k=3)")
@@ -263,34 +346,44 @@ with tab_cluster:
             lambda r: assign_quadrant(r["performance_score"], r["risk_bucket"]), axis=1
         )
 
-        # ===== Overview =====
+        # Overview 
         st.markdown("### Overview")
         total_emp = len(df_plot)
         avg_perf = float(np.nanmean(df_plot["performance_score"])) if total_emp else 0.0
-        high_risk_count = int((df_plot["quadrant"] == "High Performance, High Risk").sum())  # Quadrant 4
-        low_risk_count = int((df_plot["quadrant"] == "High Performance, Low Risk").sum())   # Quadrant 3
+        high_risk_count = int((df_plot["quadrant"] == "High Performance, High Risk").sum())  # Q4
+        low_risk_count = int((df_plot["quadrant"] == "High Performance, Low Risk").sum())    # Q3
 
         cA, cB, cC, cD = st.columns(4)
         cA.metric("Employees", f"{total_emp:,}")
         cB.metric("Avg Performance", f"{avg_perf:.1f}")
-        cC.metric("High Risk to Resign", f"{high_risk_count:,}")
-        cD.metric("Low Risk to Resign", f"{low_risk_count:,}")
+        cC.metric("High Risk to Resign (Q4)", f"{high_risk_count:,}")
+        cD.metric("Low Risk to Resign (Q3)", f"{low_risk_count:,}")
 
-        # Risk bucket distribution
+        # Risk bucket distribution (Low → Medium → High) 
+        st.markdown("### Risk Bucket Distribution")
+        order = pd.CategoricalDtype(categories=["Low", "Medium", "High"], ordered=True)
         risk_counts = (
-            df_plot["risk_bucket"].value_counts(dropna=False)
-            .rename_axis("risk_bucket")
-            .reset_index(name="count")
+            df_plot.assign(risk_bucket=df_plot["risk_bucket"].astype(order))
+                   .value_counts("risk_bucket", dropna=False)
+                   .rename_axis("risk_bucket")
+                   .reset_index(name="count")
         )
         risk_counts["percent"] = (risk_counts["count"] / total_emp * 100).round(1)
+
         fig_risk = px.bar(
-            risk_counts, x="risk_bucket", y="count",
-            color="risk_bucket", text="percent",
-            title="Risk Bucket Distribution"
+            risk_counts.sort_values("risk_bucket"),
+            x="risk_bucket",
+            y="count",
+            text="percent",
+            title="Risk Bucket Distribution (Low • Medium • High)",
+            color="risk_bucket",
+            category_orders={"risk_bucket": ["Low", "Medium", "High"]},
+            color_discrete_map=RISK_COLOR_MAP,
         )
+        fig_risk.update_traces(texttemplate="%{text}%")
         st.plotly_chart(fig_risk, use_container_width=True)
 
-        # Quadrant summary
+        #  Quadrant summary 
         st.markdown("### Quadrant Summary")
         quad_counts = (
             df_plot["quadrant"].value_counts(dropna=False)
@@ -304,8 +397,12 @@ with tab_cluster:
             st.dataframe(quad_counts.sort_values("quadrant"), use_container_width=True)
         with q2:
             fig_quad = px.pie(
-                quad_counts, names="quadrant", values="count",
-                title="Quadrant Share"
+                quad_counts,
+                names="quadrant",
+                values="count",
+                title="Quadrant Share",
+                color="quadrant",
+                color_discrete_map=QUAD_COLOR_MAP,
             )
             st.plotly_chart(fig_quad, use_container_width=True)
 
@@ -341,7 +438,7 @@ with tab_cluster:
         radar.update_layout(polar=dict(radialaxis=dict(visible=True)))
         st.plotly_chart(radar, use_container_width=True)
 
-        # ===== Employee Drilldown =====
+        # Employee Drilldown 
         st.markdown("### Employee Drilldown")
         ids_sorted = df_plot["employee_id"].tolist()
         sel_id = st.selectbox("Choose Employee ID", ids_sorted)
@@ -355,18 +452,18 @@ with tab_cluster:
         d3.metric("Risk Bucket", row["risk_bucket"])
         d4.metric("Quadrant", f"{qid}")
 
-        # Meaning & Recommendation based on Cluster + Quadrant
         key = (int(row["cluster"]), qid)
         meaning_text = MEANING_BY_CQ.get(key)
         reco_text = RECO_BY_CQ.get(key)
 
-        st.caption(f"Quadrant {qid}: {row['quadrant']}")
-        st.caption(f"Meaning: {CLUSTER_MEANINGS[int(row['cluster'])]}")
-
-        if meaning_text:
-            st.write(f"**Meaning:** {meaning_text}")
-        if reco_text:
-            st.write(f"**Recommendations:** {reco_text}")
+        render_cq_block(
+            cluster_id=int(row["cluster"]),
+            qid=qid,
+            perf=float(row["performance_score"]),
+            risk_bucket=row["risk_bucket"],
+            meaning_text=meaning_text,
+            reco_text=reco_text
+        )
 
         with st.expander("Row details"):
             st.dataframe(row.to_frame().rename(columns={row.name: "value"}))
