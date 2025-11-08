@@ -85,6 +85,7 @@ We use a two-layer framework:
 
 **Deliverables**
 - Jupyter Notebook (exploration and modeling)
+- [Tableau for Data Visualization  ](https://public.tableau.com/app/profile/lidia.priskila/viz/WorkforceInsight/Dashboard4)
 - [Streamlit app for HR to know clustering and prediction of the employee ](https://hr-employee-clustering-prediction.streamlit.app/)
 - Final report with recommendations
 
